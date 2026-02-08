@@ -1,46 +1,40 @@
 import random
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.special import softmax
 
 class OjaRL:
     def __init__(self, **hparams):
         self.hparams = {**hparams}
-        self.Q_sa = np.random.rand(self.hparams['n_actions'])
+        self.Q_sa = np.random.rand(self.hparams['n_features'], self.hparams['n_actions'])
         self.probs = softmax(self.Q_sa)
         self.rewards = []
 
         self.discount_factor = self.hparams['discount_factor']
         self.learning_rate = self.hparams['learning_rate']
-        self.VS = .0
 
-        def calc_VS(reward:float):
-            chosen = random.choices(range(self.hparams['n_actions']), weights=self.probs.reshape(-1), k=1)[0]
-            forward = np.sum(self.probs * self.Q_sa) + reward
-            sum_a = np.sum([prob for i, prob in enumerate(self.probs) if i != chosen])
-            forward = forward.reshape(forward.size, 1)
+        def LT(mtrx:np.ndarray):
+            cp = mtrx.copy()
+            for i in range(cp.shape[0]):
+                for j in range(i):
+                    cp[i, j] = 0
 
-            self.VS *= forward * self.discount_factor * sum_a
-            self.VS = np.clip(self.VS, -1e10, 1e10)
+            return cp
 
-            return chosen
+        def update_Q_sa(obs:np.ndarray,  reward:float):
+            #print(self.probs.shape, self.Q_sa.T.shape)
+            delta_Q_sa = reward*self.learning_rate*(obs @ self.probs.T - self.Q_sa @ LT(self.probs @ self.probs.T))
+            self.Q_sa += delta_Q_sa
 
-        def update_Q_sa(chosen:int, reward:float):
-            prob_cp = self.probs.reshape(self.probs.size, 1)
-            delta_Q_sa = self.VS * self.learning_rate * (prob_cp - self.VS * self.Q_sa)
-            self.Q_sa = (reward * self.discount_factor + delta_Q_sa) * self.probs[chosen]
-            self.probs = softmax(np.sum(self.Q_sa, axis=1))
-
-
-        self.calc_VS = calc_VS
         self.update_Q_sa = update_Q_sa
 
-    def forward_learn(self, reward:float):
-        chosen = self.calc_VS(reward)
-        self.update_Q_sa(chosen, reward)
-        self.rewards.append(reward)
-        return chosen
+    def forward_learn(self, obs:np.ndarray, reward:float):
+        self.probs = obs.reshape(1, obs.size) @ self.Q_sa
+        obs = obs.reshape(obs.size, 1)
 
-    def show_rewards(self):
-        plt.plot(range(len(self.rewards)), self.rewards)
-        plt.show()
+        #print(np.max(self.probs) - np.min(self.probs))
+        self.probs = (self.probs - np.min(self.probs)) / (np.max(self.probs) - np.min(self.probs))
+        self.probs = self.probs.T
+        print(self.probs.T)
+        chosen = random.choices(range(self.hparams['n_actions']), weights=self.probs.reshape(-1), k=1)[0]
+        self.update_Q_sa(obs, reward)
+        return chosen
