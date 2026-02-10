@@ -10,5 +10,5 @@ if __name__ == '__main__':
     env.close()
 
     print(env.observation_space.shape)
-    model = OjaRL(learning_rate=0.005, discount_factor=0.95, n_actions=ac, n_features=o, a_plus=30, a_minus=10)
+    model = OjaRL(learning_rate=0.005, discount_factor=0.95, n_features=o)
     test(model)

@@ -6,11 +6,7 @@ import time
 class OjaRL:
     def __init__(self, **hparams):
         self.hparams = {**hparams}
-        self.probs = softmax(np.array([[.5], [.5]]))
         self.rewards = .0
-        
-        self.a_plus = self.hparams['a_plus']
-        self.a_minus = self.hparams['a_minus']
         self.W = np.random.rand(self.hparams['n_features'], 1)
 
         self.temp = 0.3
