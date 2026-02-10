@@ -1,40 +1,43 @@
 import random
 import numpy as np
-from scipy.special import softmax
+from scipy.special import softmax, expit
+import time
 
 class OjaRL:
     def __init__(self, **hparams):
         self.hparams = {**hparams}
-        self.Q_sa = np.random.rand(self.hparams['n_features'], self.hparams['n_actions'])
-        self.probs = softmax(self.Q_sa)
-        self.rewards = []
+        self.probs = softmax(np.array([[.5], [.5]]))
+        self.rewards = .0
+        
+        self.a_plus = self.hparams['a_plus']
+        self.a_minus = self.hparams['a_minus']
+        self.W = np.random.rand(self.hparams['n_features'], 1)
 
+        self.temp = 0.3
         self.discount_factor = self.hparams['discount_factor']
         self.learning_rate = self.hparams['learning_rate']
+        self.scaler = lambda x: softmax(x/self.temp)
 
-        def LT(mtrx:np.ndarray):
-            cp = mtrx.copy()
-            for i in range(cp.shape[0]):
-                for j in range(i):
-                    cp[i, j] = 0
+        def alpha(x:np.ndarray):
+            cp = x.copy()
+            cp[cp > 0] = 1
+            cp[cp <= 0] = -1
 
             return cp
 
-        def update_Q_sa(obs:np.ndarray,  reward:float):
-            #print(self.probs.shape, self.Q_sa.T.shape)
-            delta_Q_sa = reward*self.learning_rate*(obs @ self.probs.T - self.Q_sa @ LT(self.probs @ self.probs.T))
-            self.Q_sa += delta_Q_sa
+        self.alpha = alpha
 
-        self.update_Q_sa = update_Q_sa
+    def forward_learn(self, obs, reward:float) -> int:
+        obs = obs.reshape(1, obs.size)
+        output = obs @ self.W
+        chosen = 1 if output[0] > 0 else 0
 
-    def forward_learn(self, obs:np.ndarray, reward:float):
-        self.probs = obs.reshape(1, obs.size) @ self.Q_sa
-        obs = obs.reshape(obs.size, 1)
-
-        #print(np.max(self.probs) - np.min(self.probs))
-        self.probs = (self.probs - np.min(self.probs)) / (np.max(self.probs) - np.min(self.probs))
-        self.probs = self.probs.T
-        print(self.probs.T)
-        chosen = random.choices(range(self.hparams['n_actions']), weights=self.probs.reshape(-1), k=1)[0]
-        self.update_Q_sa(obs, reward)
+        self.rewards += 1/reward
+        
+        delta_W = self.learning_rate * output[0] * (obs.T - output[0] * self.W * (1 if output[0] > 0 else -1)) * self.rewards
+        self.W -= delta_W
+        self.W = self.scaler(self.W)
+        print(self.W, output, self.probs)
+        print(chosen)
         return chosen
+
