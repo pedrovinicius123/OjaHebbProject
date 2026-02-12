@@ -67,7 +67,7 @@ class EnvTrainer:
                 max_up = r
                 max_up_idx = i
             
-            elif max_up > r > max_d:
+            elif max_up >= r > max_d:
                 max_d = r
                 max_d_idx = i
 
@@ -92,7 +92,6 @@ class EnvTrainer:
         for ep in range(episodes):
             self.generate_models()
             self.run_models_and_choice()
-            logging.info(f'EPOCH {ep+1} finalized!')             
-        
+            logging.info(f'EPOCH {ep+1} finalized!')            
         return self.chosen_first
     
