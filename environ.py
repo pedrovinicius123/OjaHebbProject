@@ -3,7 +3,7 @@ from gymnasium.wrappers import RecordEpisodeStatistics, RecordVideo
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import deque
-import random, time
+import random, time, os
 
 def test(model):
     # Parâmetros do treinamento
@@ -20,6 +20,14 @@ def test(model):
     print("Iniciando execução do CartPole-v1...")
     print(f"Total de episódios: {EPISODES}\n")
 
+    if not os.path.exists('results'):
+        os.mkdir('results')
+
+    n_files = len(os.listdir('results'))
+
+    if not os.path.exists(f'plots/fig-{n_files}'):
+        os.makedirs(f'plots/fig-{n_files}')
+
     # Executar episódios
     for episode in range(EPISODES):
         state = env.reset()
@@ -30,7 +38,7 @@ def test(model):
         for step in range(MAX_STEPS):
             # Ação aleatória (para demonstração
             state = state.reshape(1, state.size)
-            action = model(state, total_reward, frozen=True)
+            action = model(state, total_reward)
 
             # Executar ação
             result = env.step(action)
@@ -54,7 +62,11 @@ def test(model):
     
         # Exibir progresso a cada 10 episódios
         if (episode + 1) % 1 == 0:
-            print(f"Episódio {episode + 1}/{EPISODES}, Score: {total_reward}")
+            
+            episode_reward = f"Episódio {episode + 1}/{EPISODES}, Score: {total_reward}\n"
+            
+            with open(f'results/result-{n_files}.log', 'a') as file:
+                file.write(episode_reward)
 
         total_reward = 1
     # Fechar ambiente
@@ -66,15 +78,16 @@ def test(model):
     max_score = np.max(scores)
     min_score = np.min(scores)
 
-    print("\n" + "="*50)
-    print("ESTATÍSTICAS DOS SCORES:") 
-    print(f"Média: {mean_score:.2f}")
-    print(f"Mediana: {median_score:.2f}")
-    print(f"Melhor score: {max_score}")
-    print(f"Pior score: {min_score}")
-    print("="*50)
+    with open(f'results/result-{n_files}.log', 'a') as file:
+        file.write("\n" + "="*50 + "\n")
+        file.write("ESTATÍSTICAS DOS SCORES:\n") 
+        file.write(f"Média: {mean_score:.2f}\n")
+        file.write(f"Mediana: {median_score:.2f}\n")
+        file.write(f"Melhor score: {max_score}\n")
+        file.write(f"Pior score: {min_score}\n")
+        file.write("="*50)
 
-    print(scores)
+    #print(scores)
 
     # Criar gráfico
     plt.figure(figsize=(12, 6))
@@ -108,7 +121,10 @@ def test(model):
 
     plt.suptitle(f'Análise de Desempenho - CartPole-v1 ({EPISODES} episódios)', 
              fontsize=16, fontweight='bold', y=1.02)
-    plt.show()
+
+    
+
+    plt.savefig(f'plots/fig-{n_files}/stats.png')
 
     # Versão alternativa simplificada (apenas gráfico de linha)
     plt.figure(figsize=(10, 5))
@@ -134,7 +150,7 @@ def test(model):
     plt.grid(True, alpha=0.3)
     plt.legend()
     plt.tight_layout()
-    plt.show()
+    plt.savefig(f'plots/fig-{n_files}/median.png')
 
 def record_videos(model):
 
@@ -167,7 +183,7 @@ def record_videos(model):
         episode_over = False
         while not episode_over:
             # Replace this with your trained agent's policy
-            action = model(obs, 1, frozen=True)  # Random policy for demonstration
+            action = model(obs, 1)  # Random policy for demonstration
 
             obs, reward, terminated, truncated, info = env.step(action)
             episode_reward += reward

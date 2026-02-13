@@ -16,7 +16,7 @@ def alpha(x:np.ndarray):
 
 class OjaRL:
     def __init__(self, model_id=uuid.uuid4(), learning_rate:float=.01, discount_factor=.95, n_features=4):
-        self.rewards = 1
+        self.rewards = 0
         self.model_id = model_id 
         self.W = np.random.rand(n_features, 1)
 
@@ -32,8 +32,8 @@ class OjaRL:
         self.rewards += 1/reward
         #print(self.rewards, self.W, output)
         
-        delta_W = self.learning_rate * output[0] * (obs.T - output[0] * self.W * (1 if output[0] > 0 else -1)) * self.rewards if not frozen else .0
-        self.W -= delta_W
+        delta_W = self.learning_rate * output[0] * (1 if output[0] > 0 else -1) * (obs.T - output[0] * self.W) * self.rewards if not frozen else .0
+        self.W += delta_W
         self.W = scaler(self.W)
         #print(self.W, output)
         #print(chosen)
