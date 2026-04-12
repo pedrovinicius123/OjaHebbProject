@@ -34,14 +34,14 @@ def run_env(model, env, intervals):
 
 class EnvTrainer:
     # Number of individuals = n_features^2
-    def __init__(self, *intervals, model=OjaRL, n_features:int=10, noise=.01, env=gym.make('CartPole-v1'), ):
+    def __init__(self, *intervals, model=OjaRL, n_features:int=10, n_input_features:int=4, noise=.01, env=gym.make('CartPole-v1'), ):
         self.min_lr, self.max_lr = 0, 1
         self.min_discount_factor, self.max_discount_factor = 0, 1
         self.n_features = n_features
         self.model = model
         self.noise = noise
         self.chosen_first = None
-        self.std_weight = np.random.rand(4, 1)
+        self.std_weight = np.random.rand(n_input_features, 1)
         self.env = env
         self.intervals = intervals
         
