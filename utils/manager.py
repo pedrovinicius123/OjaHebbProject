@@ -14,13 +14,13 @@ import os
 # Logging config
 from datetime import datetime
 
-def run_env(model, env):
+def run_env(model, env, intervals):
     observation, info = env.reset()
     done = False
     rewards = 1
             
     while not done:
-        action = model(observation, rewards)
+        action = model(observation, rewards, intervals=list(intervals))
         observation, reward, terminated, truncated, info = env.step(action)
         rewards += reward
 
@@ -34,7 +34,7 @@ def run_env(model, env):
 
 class EnvTrainer:
     # Number of individuals = n_features^2
-    def __init__(self, model=OjaRL, n_features:int=10, noise=.01, env=gym.make('CartPole-v1')):
+    def __init__(self, *intervals, model=OjaRL, n_features:int=10, noise=.01, env=gym.make('CartPole-v1'), ):
         self.min_lr, self.max_lr = 0, 1
         self.min_discount_factor, self.max_discount_factor = 0, 1
         self.n_features = n_features
@@ -43,6 +43,8 @@ class EnvTrainer:
         self.chosen_first = None
         self.std_weight = np.random.rand(4, 1)
         self.env = env
+        self.intervals = intervals
+        
         if not os.path.exists('logs'):
             os.mkdir('logs')
 
@@ -57,7 +59,7 @@ class EnvTrainer:
             model.W = self.std_weight
 
     def run_models_and_choice(self):        
-        args = [(model, self.env) for model in self.models]
+        args = [(model, self.env, self.intervals) for model in self.models]
         with multiprocessing.Pool(processes=5) as pool:
             models, rewards = zip(*pool.starmap(run_env, args))
 

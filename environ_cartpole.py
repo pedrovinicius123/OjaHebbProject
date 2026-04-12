@@ -38,8 +38,8 @@ def test(model):
         for step in range(MAX_STEPS):
             # Ação aleatória (para demonstração
             state = state.reshape(1, state.size)
-            action = model(state, total_reward)
-
+            action = model(state, 1, intervals=[(-float("inf"), 0), (0, float("inf"))])
+            print(action)
             # Executar ação
             result = env.step(action)
         
@@ -183,8 +183,8 @@ def record_videos(model):
         episode_over = False
         while not episode_over:
             # Replace this with your trained agent's policy
-            action = model(obs, 1)  # Random policy for demonstration
-
+            action = model(obs, 1, intervals=[(-float("inf"), 0), (0, float("inf"))])  # Random policy for demonstration
+            print(action)
             obs, reward, terminated, truncated, info = env.step(action)
             episode_reward += reward
             step_count += 1

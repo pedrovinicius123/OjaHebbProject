@@ -24,10 +24,18 @@ class OjaRL:
         self.discount_factor = discount_factor
         self.learning_rate = learning_rate
         
-    def __call__(self, obs, reward:float, frozen:bool=False) -> int:
+    def __call__(self, obs, reward:float, frozen:bool=False, intervals=[]) -> int:
         obs = obs.reshape(1, obs.size)
         output = obs @ self.W
-        chosen = 1 if output[0] > 0 else 0
+        
+        # Atualiza o traço com a saída atual (Elegibilidade)
+        chosen = None
+
+        for i, interval in enumerate(intervals):
+            m, M = interval
+            if m < output <= M:
+                chosen = i
+                break
 
         self.rewards += 1/reward
         #print(self.rewards, self.W, output)
